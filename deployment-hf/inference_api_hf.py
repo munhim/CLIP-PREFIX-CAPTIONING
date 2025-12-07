@@ -7,14 +7,16 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as nnf
 import clip
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from PIL import Image
 from io import BytesIO
 import os
 from typing import Optional, Tuple
 import uvicorn
+import requests
 from enum import Enum
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
 from huggingface_hub import hf_hub_download
@@ -426,23 +428,24 @@ async def generate_caption_from_upload(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
 
-@app.post("/caption/url")
-async def generate_caption_from_url(
-    image_url: str,
-    max_length: int = 77,
-    temperature: float = 1.0,
+# Request model for URL endpoint
+class CaptionUrlRequest(BaseModel):
+    image_url: str
+    max_length: int = 77
+    temperature: float = 1.0
     top_p: float = 0.9
-):
+
+@app.post("/caption/url")
+async def generate_caption_from_url(request: CaptionUrlRequest):
     """Generate caption from image URL"""
     
     if model is None or clip_model is None:
         raise HTTPException(status_code=503, detail="Models not loaded")
     
     try:
-        import requests
-        
         # Download image
-        response = requests.get(image_url, timeout=10)
+        response = requests.get(request.image_url, timeout=10)
+        response.raise_for_status()  # Raise exception for bad status codes
         image = Image.open(BytesIO(response.content))
         
         if image.mode != 'RGB':
@@ -454,19 +457,22 @@ async def generate_caption_from_url(
             clip_features = clip_model.encode_image(img_tensor).cpu().float()
         
         # Generate caption
-        caption = generate_caption(model, tokenizer, clip_features, device, max_length, temperature, 0, top_p)
+        caption = generate_caption(model, tokenizer, clip_features, device, 
+                                  request.max_length, request.temperature, 0, request.top_p)
         
         return JSONResponse({
             "caption": caption,
-            "image_url": image_url,
+            "image_url": request.image_url,
             "image_size": image.size,
             "parameters": {
-                "max_length": max_length,
-                "temperature": temperature,
-                "top_p": top_p
+                "max_length": request.max_length,
+                "temperature": request.temperature,
+                "top_p": request.top_p
             }
         })
         
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=400, detail=f"Error downloading image from URL: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing image from URL: {str(e)}")
 

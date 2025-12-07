@@ -161,8 +161,16 @@ async function handleGenerate() {
         }
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-            throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+            let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.detail || errorData.message || errorMessage;
+            } catch (e) {
+                // If response is not JSON, use status text
+                const text = await response.text().catch(() => '');
+                if (text) errorMessage = text;
+            }
+            throw new Error(errorMessage);
         }
 
         const data = await response.json();

@@ -1,0 +1,62 @@
+# HuggingFace Cache (model files - too large for Git)
+deployment-hf/hf_cache/
+hf_cache/
+*.pt
+*.bin
+*.safetensors
+*.ckpt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Model checkpoints and data
+checkpoints/
+*.pth
+*.pkl
+data/
+*.pkl
+
+# Logs
+*.log
+mlruns/
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Docker
+.dockerignore
+
+# Environment variables
+.env
+.env.local
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
