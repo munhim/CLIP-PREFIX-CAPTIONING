@@ -1,8 +1,10 @@
 // Configuration
 // API URL - connects to inference-api service
-const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8000'
-    : `http://${window.location.hostname}:8000`;
+// const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+//     ? 'http://localhost:8000'
+//     : `http://${window.location.hostname}:8000`;
+// API URL - points to your Modal deployment
+const API_BASE_URL = 'https://hamzaimran66628--clip-captioning-api-fastapi.modal.run';
 
 // DOM Elements
 const uploadArea = document.getElementById('uploadArea');
