@@ -1,0 +1,53 @@
+services:
+  # Inference API service (HuggingFace Model)
+  inference-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: clip-captioning-hf:latest
+    container_name: clip-captioning-api-hf
+    runtime: nvidia
+    ports:
+      - "8000:8000"
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - HF_MODEL_ID=Hamza66628/clip-prefix-caption-coco
+    volumes:
+      - ./hf_cache:/app/hf_cache
+    command: python3 inference_api_hf.py
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend UI service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: clip-captioning-frontend:latest
+    container_name: clip-captioning-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - inference-api
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  default:
+    name: clip-captioning-network
+
